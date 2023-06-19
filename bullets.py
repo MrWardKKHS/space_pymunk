@@ -51,3 +51,13 @@ class Saw(Bullet):
         self.mass = 5
         self.change_x = self.max_velocity * math.cos(self.angle_radians + math.pi / 2)
         self.change_y = self.max_velocity * math.sin(self.angle_radians + math.pi / 2)
+
+class Bouncy(Bullet):
+    def __init__(self, center_x, center_y, angle, damage=1, scale=1):
+        super().__init__(filename, center_x, center_y, angle, damage, scale)
+        self.collision_type = 'bouncy'
+        raise NotImplementedError
+        # TODO make class, get image,
+        # behaviour should be to bounce of asteroids(default)
+        # but also to bounce off screen edges. 
+        # This should be fired at an angle to accentuate this behavior

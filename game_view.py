@@ -6,6 +6,7 @@ import math
 from constants import *
 from fighter import Fighter
 from player import Player
+from hit_handlers import enemy_hit_handler, kill_bullet, no_collision
 
 class TestGame(arcade.Window):
     def __init__(self):
@@ -59,6 +60,12 @@ class TestGame(arcade.Window):
         for i in range(5):
             # helper function to reduce code duplication
             self.spawn_enemy()
+        for enemy in self.scene['enemies']:
+            enemy.targets.append(self.player_sprite)
+            for other in self.scene['enemies']:
+                if enemy is not other:
+                    enemy.flee_targets.append(other)
+            enemy.state_machine.awake()
 
         self.accelerating_up = False
         self.accelerating_down = False
@@ -70,23 +77,6 @@ class TestGame(arcade.Window):
         # and to seperate out game logic
         self.make_rocks()
 
-        def enemy_hit_handler(enemy, bullet, arbiter, space, data):
-            """
-            This is a requirement of any two sprite types that you want to have interact
-            in this case the enemy and the bullet
-
-            The other arguments need to be as listed here
-
-            This code will run whenever there is a collision between the A and B sprite types
-            notice the level of indentation on this function. 
-            It is defined WITHIN the self.setup function
-            """
-            enemy.health -= 1
-            bullet.kill()
-            if enemy.health <= 0:
-                enemy.kill()
-                self.spawn_enemy()
-
         # add the collision handler between these two sprite types
         # the post_handler is the callback function to run after the collision is delt with
         self.physics_engine.add_collision_handler(
@@ -94,14 +84,43 @@ class TestGame(arcade.Window):
                 'player_bullet', 
                 post_handler=enemy_hit_handler
         )
+        self.physics_engine.add_collision_handler(
+                'rock', 
+                'player_bullet', 
+                post_handler=kill_bullet
+        )
+        self.physics_engine.add_collision_handler(
+                'rock', 
+                'bullet', 
+                post_handler=kill_bullet
+        )
+        self.physics_engine.add_collision_handler(
+                'enemy', 
+                'bullet', 
+                post_handler=kill_bullet
+        )
+        #self.physics_engine.add_collision_handler(
+        #        'enemy',
+        #        'bullet',
+        #        separate_handler=no_collision,
+        #)
+
+        # TODO Turn off collisions between enemies and enemy_bullets
+        # Potentially the way to do this is to use collision handlers, 
+        # Unsure where to do this in arcade, to overwrite the default
+        # chipmunk is throwing errors on anything other than 'post handlers'
+        # self.physics_engine.space.add_wildcard_collision_handler()
 
     def spawn_enemy(self):
         """Create an enemy and add it to the enemy list AND the physics engine"""
 
         enemy = Fighter(
-            random.randint(int(self.player_sprite.center_x + WIDTH), 
-            int(self.player_sprite.center_x + 4 * WIDTH)), 
-            random.randint(0, HEIGHT)
+            random.randint(
+                int(self.player_sprite.center_x + WIDTH), 
+                int(self.player_sprite.center_x + 4 * WIDTH)
+            ), 
+            random.randint(0, HEIGHT),
+            self.physics_engine
         )
         # Add the sprite to the physics engine including specifying the collision type
         self.physics_engine.add_sprite(
@@ -170,6 +189,7 @@ class TestGame(arcade.Window):
                     8, 
                     arcade.color.GREEN
             )
+            arcade.draw_text(enemy.state_machine.state, enemy.center_x - 30, enemy.center_y - 60, font_size=20)
 
     def handle_player_movement(self):
         # .apply_force_at_world_point() applies a force irrespective of a 
@@ -190,28 +210,19 @@ class TestGame(arcade.Window):
 
     def update(self, delta_time):
         self.physics_engine.step()
+        self.physics_engine.resync_sprites()
         self.handle_player_movement()
         self.scene.update()
 
         # Fighters to seek the player
         for enemy in self.scene['enemies']:
-            enemy.target = self.player_sprite.position
-            # Handle some of the enemy behaviour
-            # Some of this should live in the enemy class
-            if enemy.weapon_cooldown > 100 and enemy.pointing_at_target():
-                self.handle_sprite_fire(enemy)
-
-            # Create a desired direction pointing straight towards the player.
-            # Apply the enemy steering behaviour directly towards that point
-            enemy.seek(Vec2(self.player_sprite.center_x, self.player_sprite.center_y))
-
-            # and not bunch up
+            enemy.targets = []
+            enemy.flee_targets = []
+            enemy.targets.append(Vec2(self.player_sprite.center_x, self.player_sprite.center_y))
             for other in self.scene['enemies']:
                 if enemy is not other:
-                    target = Vec2(other.center_x, other.center_y)
-                    # If an enemy is within 300px of another enemy, 
-                    # runaway from that enemy
-                    enemy.flee(target, 300)
+                    enemy.flee_targets.append(Vec2(other.center_x, other.center_y))
+            enemy.state_machine.update()
 
         # reposition rocks if they drift outside of the y axis
         for rock in self.scene['rocks']:
