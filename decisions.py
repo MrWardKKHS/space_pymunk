@@ -4,7 +4,7 @@ if TYPE_CHECKING:
     from state_machines import StateMachine 
 import arcade
 import math
-
+from time import time
 
 class Decision:
     """A class to hold a conditional. This represents an 'if' statement 
@@ -31,12 +31,15 @@ class FullHealthDecision(Decision):
 
 class WithinRangeDecision(Decision):
     """Triggers when sprite is within some range of the target"""
-    def __init__(self, point: arcade.Sprite, _range: int)-> None:
+    def __init__(self, point: arcade.Sprite, outer_limit: float = math.inf, inner_limit: float = 0)-> None:
         self.target = point
-        self.range = _range
+        self.outer_limit = outer_limit
+        self.inner_limit = inner_limit
 
     def decide(self, state_machine: StateMachine):
-        return math.dist(state_machine.sprite.position, self.target.position) < self.range
+        dist = math.dist(state_machine.sprite.position, self.target.position) 
+        print(dist)
+        return self.inner_limit < dist < self.outer_limit
 
 
 class OutOfRange(Decision):
@@ -48,3 +51,17 @@ class OutOfRange(Decision):
     def decide(self, state_machine: StateMachine):
         return math.dist(state_machine.sprite.position, self.target.position) > self.range
 
+class TimeElapsedDecision(Decision):
+    def __init__(self, duration: float) -> None:
+        self.start_time = time()
+        self.duration = duration
+
+    def decide(self, state_machine: StateMachine):
+        return time() - self.start_time >= self.duration
+
+class TakenDamageDecision(Decision):
+    def __init__(self, initial_health) -> None:
+        self.initial_health = initial_health
+
+    def decide(self, state_machine: StateMachine) -> bool:
+        return state_machine.sprite.health < self.initial_health

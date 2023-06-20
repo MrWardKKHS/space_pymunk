@@ -1,10 +1,12 @@
 from __future__ import annotations
+import arcade
 from typing import TYPE_CHECKING
 import math
 from pyglet.math import Vec2
 
+
 if TYPE_CHECKING:
-    from state_machines import StateMachine
+    from state_machines import StateMachine, FighterStateMachine
 
 
 class BaseActivity:
@@ -25,7 +27,7 @@ class BaseActivity:
 
 
 class Seek(BaseActivity):
-    def __init__(self, target, arrive: bool = True) -> None:
+    def __init__(self, target: arcade.Sprite, arrive: bool = True) -> None:
         """
         A steering behaviour where the vehicle attempts to 
         move towards the target at the fastest possible rate
@@ -67,7 +69,7 @@ class Seek(BaseActivity):
         state_machine.sprite.forces.append(force)
 
 class Flee(BaseActivity):
-    def __init__(self, target, _range: int = 200) -> None:
+    def __init__(self, target: arcade.Sprite, _range: int = 200) -> None:
         """A steering behaviour where the vehicle attempts to 
             move away from the target at the fastest possible rate
         Args:
@@ -105,7 +107,29 @@ class Flee(BaseActivity):
         state_machine.sprite.forces.append(force)
 
 class PointTowardsTargetActivity(BaseActivity):
-    pass
+    def __init__(self, target: arcade.Sprite) -> None:
+        """
+        """
+        self.target = target
+
+    def execute(self, state_machine: StateMachine):
+        dx =  state_machine.sprite.center_x - self.target.center_x
+        dy = state_machine.sprite.center_y - self.target.center_y 
+
+        angle = math.atan2(dy, dx)
+        state_machine.sprite.physics_body.angle = angle + math.pi/2
+
+class PointInDirectionOfTravelActivity(BaseActivity):
+    def execute(self, state_machine: StateMachine):
+        physics_body = state_machine.sprite.physics_body
+        vel = Vec2(physics_body.velocity.x, physics_body.velocity.y)
+        physics_body.angle = vel.heading - math.pi/2
 
 class FireActivity(BaseActivity):
-    pass
+    def execute(self, state_machine: FighterStateMachine):
+        bullets = state_machine.sprite.fire()
+        for bullet in bullets:
+            state_machine.bullet_list.append(bullet)
+            state_machine.physics_engine.add_sprite(bullet, collision_type=bullet.collision_type, max_velocity=bullet.max_velocity, moment_of_inertia=bullet.moment_of_inertia, mass=bullet.mass, damping=0.99)
+            state_machine.physics_engine.set_velocity(bullet, (bullet.change_x, bullet.change_y))
+

@@ -8,6 +8,7 @@ from constants import *
 from fighter import Fighter
 from player import Player
 from hit_handlers import enemy_hit_handler, kill_bullet
+from state_machines import FighterStateMachine
 
 class TestGame(arcade.Window):
     def __init__(self):
@@ -62,7 +63,7 @@ class TestGame(arcade.Window):
             # helper function to reduce code duplication
             self.spawn_enemy()
         for enemy in self.scene['enemies']:
-            enemy.state_machine.targets.append(self.player_sprite)
+            enemy.state_machine = FighterStateMachine(enemy, self.physics_engine, self.scene['enemy_bullets'], self.player_sprite)
             for other in self.scene['enemies']:
                 if enemy is not other:
                     enemy.state_machine.flee_targets.append(other)
@@ -121,7 +122,6 @@ class TestGame(arcade.Window):
                 int(self.player_sprite.center_x + 4 * WIDTH)
             ), 
             random.randint(0, HEIGHT),
-            self.physics_engine
         )
         # Add the sprite to the physics engine including specifying the collision type
         self.physics_engine.add_sprite(
@@ -219,10 +219,6 @@ class TestGame(arcade.Window):
 
         # Fighters to seek the player
         for enemy in self.scene['enemies']:
-            enemy.state_machine.targets.append(Vec2(self.player_sprite.center_x, self.player_sprite.center_y))
-            for other in self.scene['enemies']:
-                if enemy is not other:
-                    enemy.state_machine.flee_targets.append(Vec2(other.center_x, other.center_y))
             enemy.state_machine.update()
 
         # reposition rocks if they drift outside of the y axis

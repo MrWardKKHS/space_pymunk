@@ -1,4 +1,5 @@
 from __future__ import annotations
+from os import stat
 from typing import TYPE_CHECKING
 import math
 
@@ -8,8 +9,8 @@ if TYPE_CHECKING:
 import arcade
 from typing import List, Tuple
 from transitions import Transition
-from activities import BaseActivity, Seek, Flee
-from decisions import LowHealthDecision, ArrivedAtPointDecision, OutOfRange, WithinRangeDecision
+from activities import BaseActivity, PointInDirectionOfTravelActivity, Seek, Flee, PointTowardsTargetActivity, FireActivity
+from decisions import LowHealthDecision, OutOfRange, TakenDamageDecision, TimeElapsedDecision, WithinRangeDecision
 
 # based on tutorial found here
 # https://pavcreations.com/finite-state-machine-for-ai-enemy-controller-in-2d/2/#BaseState-class
@@ -58,8 +59,8 @@ class IdleState(BaseState):
 
 class SeekAndFleeState(State):
     def enter(self, state_machine: FighterStateMachine):
-        for target in state_machine.targets:
-            self.activities.append(Seek(target))
+        self.activities.append(Seek(state_machine.target))
+        self.activities.append(PointInDirectionOfTravelActivity())
 
         for flee_target in state_machine.flee_targets:
             self.activities.append(Flee(flee_target))
@@ -71,37 +72,45 @@ class SeekAndFleeState(State):
                 None
             )
         )
+        self.transitions.append(
+            Transition(
+                WithinRangeDecision(state_machine.target, outer_limit=1000, inner_limit=700), 
+                PointAndShoot(), 
+                None
+            )
+        )
 
     def __str__(self) -> str:
         return "Seeking Player"
 
 class NavigateToPointState(State):
-    def __init__(self, target: Tuple[int, int], speed=1):
+    def __init__(self, target: Tuple[float, float]):
         super().__init__()
-        self.speed = speed
         self.target = arcade.Sprite(center_x=target[0], center_y=target[1])
     
     def enter(self, state_machine: StateMachine):
         self.activities.append(
             Seek(target=self.target)
         )
+        self.activities.append(PointInDirectionOfTravelActivity())
+
         self.transitions.append(
             Transition(
-                ArrivedAtPointDecision(self.target, 20),
+                WithinRangeDecision(self.target, 400),
                 SeekAndFleeState(),
                 None 
             )
         )
 
     def __str__(self) -> str:
-        return "Navigating to point"
+        return "Run away!!"
                     
 class PatrolState(State):
     def __init__(self, patrol_points: List[Tuple[int, int]], speed=1):
         super().__init__()
         self.patrol_points = patrol_points
         self.speed = speed
-        self.activities.append(PatrolToPointActivity())
+        # self.activities.append(PatrolToPointActivity())
 
 
 class FleeFromPlayer(State):
@@ -109,39 +118,53 @@ class FleeFromPlayer(State):
 
 
 class PointAndShoot(State):
-    def __init__(self, target):
-        """Constantly point towards the target and fire when possible"""
-        super().__init__()
-        self.target = target
-
-    def enter(self, state_machine):
-        state_machine.sprite.body.velocity = (0, 0) 
-        self.activities.append(PointTowardsTargetActivity())
+    """Constantly point towards the target and fire when possible"""
+    def enter(self, state_machine: FighterStateMachine):
         self.activities.append(FireActivity())
+        self.activities.append(PointTowardsTargetActivity(state_machine.target))
         
+#        self.transitions.append(
+#            Transition(
+#                WithinRangeDecision(state_machine.target, outer_limit=1000, inner_limit=700), 
+#                None,
+#                SeekAndFleeState(),
+#            )
+#        )
         self.transitions.append(
             Transition(
-                WithinRangeDecision(self.target, 200),
-                SeekAndFleeState(),
-                None,
+                TimeElapsedDecision(0.8),
+                PointAndShoot(),
+                None
             )
         )
         self.transitions.append(
             Transition(
-                OutOfRange(self.target, 400),
-                SeekAndFleeState(),
-                None,
+                LowHealthDecision(10), 
+                NavigateToPointState((state_machine.sprite.center_x + 3000, state_machine.sprite.center_y)), 
+                None
+            )
+        )
+        self.transitions.append(
+            Transition(
+                TakenDamageDecision(state_machine.sprite.health), 
+                NavigateToPointState((state_machine.sprite.center_x + 1000, state_machine.sprite.center_y)), 
+                None
             )
         )
 
-    def __repr__(self) -> str:
+    def execute(self, state_machine: StateMachine):
+        super().execute(state_machine)
+        for activity in self.activities:
+            if type(activity) == FireActivity:
+                self.activities.remove(activity)
+        state_machine.sprite.physics_body.velocity *= 0.99
+
+    def __str__(self) -> str:
         return "Firing!"
-
-           
-
 
 
 class Heal(State):
-    pass
+    def __str__(self) -> str:
+        return "healing"
 
 
