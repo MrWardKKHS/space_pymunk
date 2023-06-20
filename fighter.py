@@ -5,11 +5,10 @@ import math
 from bullets import RedLaser, Saw
 from pymunk import Body
 from utils import get_physics_body
-import pymunk
 from state_machines import FighterStateMachine
 
 class Sprite(arcade.Sprite):
-    def __init__(self, filename: str = None, scale: float = 1, x: int = 0, y: int = 0, health: int = 20):
+    def __init__(self, filename: str = "", scale: float = 1, x: int = 0, y: int = 0, health: int = 20):
         super().__init__(filename, scale)
         self.center_x = x
         self.center_y = y
@@ -20,8 +19,6 @@ class Sprite(arcade.Sprite):
         self.health = health
         self.max_health = health
         self.weapon_type = Saw
-        self.targets = []
-        self.flee_targets = []
 
     @property
     def physics_body(self) -> Body:
@@ -58,7 +55,7 @@ class Fighter(Sprite):
             return True
         return False
 
-    def pymunk_moved(self, physics_engine:arcade.PymunkPhysicsEngine, dx, dy, d_angle) -> None:
+    def pymunk_moved(self, physics_engine: arcade.PymunkPhysicsEngine, dx, dy, d_angle) -> None:
         self.physics_body.angular_velocity *= 0.7
         net = Vec2()
         for force in self.forces:

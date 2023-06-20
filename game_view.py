@@ -1,12 +1,13 @@
+from __future__ import annotations
+
 import random
 import arcade
 from arcade.pymunk_physics_engine import PymunkPhysicsEngine
 from pyglet.math import Vec2
-import math
 from constants import *
 from fighter import Fighter
 from player import Player
-from hit_handlers import enemy_hit_handler, kill_bullet, no_collision
+from hit_handlers import enemy_hit_handler, kill_bullet
 
 class TestGame(arcade.Window):
     def __init__(self):
@@ -61,10 +62,10 @@ class TestGame(arcade.Window):
             # helper function to reduce code duplication
             self.spawn_enemy()
         for enemy in self.scene['enemies']:
-            enemy.targets.append(self.player_sprite)
+            enemy.state_machine.targets.append(self.player_sprite)
             for other in self.scene['enemies']:
                 if enemy is not other:
-                    enemy.flee_targets.append(other)
+                    enemy.state_machine.flee_targets.append(other)
             enemy.state_machine.awake()
 
         self.accelerating_up = False
@@ -134,7 +135,7 @@ class TestGame(arcade.Window):
 
     def make_rocks(self):
         """make 500 random rocks, add them to the sprite lists and the physics_engine"""
-        for i in range(500): # This literal too, should be a constant
+        for _ in range(500): # This literal too, should be a constant
             rock_choice = random.choice(ROCK_CHOICES)
             size = 0.5 + random.random() * (1 + ROCK_CHOICES.index(rock_choice)//2)
             rock = arcade.Sprite(
@@ -171,6 +172,8 @@ class TestGame(arcade.Window):
         # get the physics_body of the rock from the engine.
         # This is to allow easy access to things like its position and other physical properties
         rock_physics_body = self.physics_engine.get_physics_object(rock).body
+        if not rock_physics_body: # Type guard
+            return
         if rock_physics_body.position.y < -rock.height:
             rock_physics_body.position = (rock_physics_body.position.x, HEIGHT + rock.height)
         if rock_physics_body.position.y > HEIGHT + rock.height:
@@ -216,12 +219,10 @@ class TestGame(arcade.Window):
 
         # Fighters to seek the player
         for enemy in self.scene['enemies']:
-            enemy.targets = []
-            enemy.flee_targets = []
-            enemy.targets.append(Vec2(self.player_sprite.center_x, self.player_sprite.center_y))
+            enemy.state_machine.targets.append(Vec2(self.player_sprite.center_x, self.player_sprite.center_y))
             for other in self.scene['enemies']:
                 if enemy is not other:
-                    enemy.flee_targets.append(Vec2(other.center_x, other.center_y))
+                    enemy.state_machine.flee_targets.append(Vec2(other.center_x, other.center_y))
             enemy.state_machine.update()
 
         # reposition rocks if they drift outside of the y axis

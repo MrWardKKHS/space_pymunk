@@ -1,10 +1,10 @@
 import arcade
-from states import SeekAndFleeState, IdleState
+from states import SeekAndFleeState, State
 
 class StateMachine:
     def __init__(self, sprite, physics_engine: arcade.PymunkPhysicsEngine):
         self.sprite = sprite
-        self.state = IdleState()
+        self.state = State()
         self.physics_engine = physics_engine
 
     def update(self):
@@ -19,11 +19,12 @@ class StateMachine:
 class FighterStateMachine(StateMachine):
     def __init__(self, sprite, physics_engine: arcade.PymunkPhysicsEngine):
         super().__init__(sprite, physics_engine)
+        self.targets = []
+        self.flee_targets = []
 
     def awake(self):
         self.state = SeekAndFleeState()
         self.state.enter(self)
-
 
 
 # Some of this should live in the enemy class
