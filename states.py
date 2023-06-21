@@ -9,8 +9,8 @@ if TYPE_CHECKING:
 import arcade
 from typing import List, Tuple
 from transitions import Transition
-from activities import BaseActivity, PointInDirectionOfTravelActivity, Seek, Flee, PointTowardsTargetActivity, FireActivity
-from decisions import LowHealthDecision, OutOfRange, TakenDamageDecision, TimeElapsedDecision, WithinRangeDecision
+from activities import BaseActivity, PointInDirectionOfTravelActivity, Seek, Flee, PointTowardsTargetActivity, FireActivity, HealActivity
+from decisions import LowHealthDecision, OutOfRange, TakenDamageDecision, TimeElapsedDecision, WithinRangeDecision, FullHealthDecision
 
 # based on tutorial found here
 # https://pavcreations.com/finite-state-machine-for-ai-enemy-controller-in-2d/2/#BaseState-class
@@ -68,13 +68,13 @@ class SeekAndFleeState(State):
         self.transitions.append(
             Transition(
                 LowHealthDecision(10), 
-                NavigateToPointState((state_machine.sprite.center_x + 1000, state_machine.sprite.center_y)), 
+                FleeFromPlayer((state_machine.sprite.center_x + 3000, state_machine.sprite.center_y)), 
                 None
             )
         )
         self.transitions.append(
             Transition(
-                WithinRangeDecision(state_machine.target, outer_limit=1000, inner_limit=700), 
+                WithinRangeDecision(state_machine.target, outer_limit=800), 
                 PointAndShoot(), 
                 None
             )
@@ -114,7 +114,26 @@ class PatrolState(State):
 
 
 class FleeFromPlayer(State):
-    pass
+    def __init__(self, target: Tuple[float, float]):
+        super().__init__()
+        self.target = arcade.Sprite(center_x=target[0], center_y=target[1])
+    
+    def enter(self, state_machine: StateMachine):
+        self.activities.append(
+            Seek(target=self.target)
+        )
+        self.activities.append(PointInDirectionOfTravelActivity())
+
+        self.transitions.append(
+            Transition(
+                WithinRangeDecision(self.target, 400),
+                Heal(),
+                None 
+            )
+        )
+
+    def __str__(self) -> str:
+        return "Fleeing!!"
 
 
 class PointAndShoot(State):
@@ -132,7 +151,7 @@ class PointAndShoot(State):
 #        )
         self.transitions.append(
             Transition(
-                TimeElapsedDecision(0.8),
+                TimeElapsedDecision(1.8),
                 PointAndShoot(),
                 None
             )
@@ -140,7 +159,7 @@ class PointAndShoot(State):
         self.transitions.append(
             Transition(
                 LowHealthDecision(10), 
-                NavigateToPointState((state_machine.sprite.center_x + 3000, state_machine.sprite.center_y)), 
+                FleeFromPlayer((state_machine.sprite.center_x + 2000, state_machine.sprite.center_y)), 
                 None
             )
         )
@@ -164,6 +183,44 @@ class PointAndShoot(State):
 
 
 class Heal(State):
+    def enter(self, state_machine: FighterStateMachine):
+        self.activities.append(HealActivity())
+#        self.transitions.append(
+#            Transition(
+#                WithinRangeDecision(state_machine.target, outer_limit=1000, inner_limit=700), 
+#                None,
+#                SeekAndFleeState(),
+#            )
+#        )
+        self.transitions.append(
+            Transition(
+                TimeElapsedDecision(1.2),
+                Heal(), 
+                None
+            )
+        )
+        self.transitions.append(
+            Transition(
+                TakenDamageDecision(state_machine.sprite.health), 
+                NavigateToPointState((state_machine.sprite.center_x + 1000, state_machine.sprite.center_y)), 
+                None
+            )
+        )
+        self.transitions.append(
+            Transition(
+                FullHealthDecision(), 
+                SeekAndFleeState(), 
+                None
+            )
+        )
+
+    def execute(self, state_machine: StateMachine):
+        super().execute(state_machine)
+        for activity in self.activities:
+            if type(activity) == HealActivity:
+                self.activities.remove(activity)
+        state_machine.sprite.physics_body.velocity *= 0.99
+
     def __str__(self) -> str:
         return "healing"
 

@@ -53,7 +53,7 @@ class Seek(BaseActivity):
 
         slow_radius = 400
         if self.arrive and force.mag < slow_radius:
-            desired_speed = -state_machine.sprite.max_speed
+            desired_speed = state_machine.sprite.max_speed * (slow_radius / force.mag)
         else:
             desired_speed = state_machine.sprite.max_speed
 
@@ -133,3 +133,6 @@ class FireActivity(BaseActivity):
             state_machine.physics_engine.add_sprite(bullet, collision_type=bullet.collision_type, max_velocity=bullet.max_velocity, moment_of_inertia=bullet.moment_of_inertia, mass=bullet.mass, damping=0.99)
             state_machine.physics_engine.set_velocity(bullet, (bullet.change_x, bullet.change_y))
 
+class HealActivity(BaseActivity):
+    def execute(self, state_machine: StateMachine):
+        state_machine.sprite.health += 1

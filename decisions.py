@@ -38,7 +38,6 @@ class WithinRangeDecision(Decision):
 
     def decide(self, state_machine: StateMachine):
         dist = math.dist(state_machine.sprite.position, self.target.position) 
-        print(dist)
         return self.inner_limit < dist < self.outer_limit
 
 
