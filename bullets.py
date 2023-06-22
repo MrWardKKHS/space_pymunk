@@ -62,3 +62,13 @@ class Bouncy(Bullet):
         # behaviour should be to bounce of asteroids(default)
         # but also to bounce off screen edges. 
         # This should be fired at an angle to accentuate this behavior
+
+class Orb(Bullet):
+    def __init__(self, center_x, center_y, angle, exp):
+        super().__init__(':resources:images/items/star.png', center_x, center_y, angle, scale=0.2)
+        self.exp = exp
+        self.change_x = self.max_velocity * math.cos(self.angle_radians + math.pi / 2)
+        self.change_y = self.max_velocity * math.sin(self.angle_radians + math.pi / 2)
+        self.max_velocity = 200
+        self.collision_type = 'orb'
+        

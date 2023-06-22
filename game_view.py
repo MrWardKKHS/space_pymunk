@@ -7,7 +7,7 @@ from pyglet.math import Vec2
 from constants import *
 from fighter import Fighter
 from player import Player
-from hit_handlers import enemy_hit_handler, kill_bullet
+from hit_handlers import enemy_hit_handler, kill_bullet, pick_up_exp
 from state_machines import FighterStateMachine
 
 class TestGame(arcade.Window):
@@ -45,6 +45,7 @@ class TestGame(arcade.Window):
         self.scene.add_sprite_list("enemies")
         self.scene.add_sprite_list("enemy_bullets")
         self.scene.add_sprite_list("player_bullets")
+        self.scene.add_sprite_list("orbs")
         self.physics_engine = arcade.PymunkPhysicsEngine(damping=1.0)
         
         # The player accepts a joystick number and
@@ -63,7 +64,7 @@ class TestGame(arcade.Window):
             # helper function to reduce code duplication
             self.spawn_enemy()
         for enemy in self.scene['enemies']:
-            enemy.state_machine = FighterStateMachine(enemy, self.physics_engine, self.scene['enemy_bullets'], self.player_sprite)
+            enemy.state_machine = FighterStateMachine(enemy, self.physics_engine, self.scene['enemy_bullets'], self.player_sprite, self.scene['rocks'])
             for other in self.scene['enemies']:
                 if enemy is not other:
                     enemy.state_machine.flee_targets.append(other)
@@ -101,11 +102,17 @@ class TestGame(arcade.Window):
                 'bullet', 
                 post_handler=kill_bullet
         )
-        #self.physics_engine.add_collision_handler(
-        #        'enemy',
-        #        'bullet',
-        #        separate_handler=no_collision,
-        #)
+        self.physics_engine.add_collision_handler(
+                'player', 
+                'orb', 
+                begin_handler=pick_up_exp
+                
+        )
+        self.physics_engine.add_collision_handler(
+                'enemy',
+                'bullet',
+                begin_handler=lambda a, b, ab, s, d: False
+        )
 
         # TODO Turn off collisions between enemies and enemy_bullets
         # Potentially the way to do this is to use collision handlers, 
@@ -194,6 +201,14 @@ class TestGame(arcade.Window):
             )
             arcade.draw_text(enemy.state_machine.state, enemy.center_x - 30, enemy.center_y - 60, font_size=20)
 
+            for activity in enemy.state_machine.state.activities:
+                try:
+                    activity.front_detector.draw()
+                    activity.right_detector.draw()
+                    activity.left_detector.draw()
+                except:
+                    continue
+
     def handle_player_movement(self):
         # .apply_force_at_world_point() applies a force irrespective of a 
         # sprites rotation. If rotation is import (think applying a thruster)
@@ -220,6 +235,13 @@ class TestGame(arcade.Window):
         # Fighters to seek the player
         for enemy in self.scene['enemies']:
             enemy.state_machine.update()
+            if enemy.health <= 0:
+                orbs = enemy.drop_experience()
+                for orb in orbs:
+                    self.scene['orbs'].append(orb)
+                    self.physics_engine.add_sprite(orb, collision_type=orb.collision_type, max_velocity=orb.max_velocity, moment_of_inertia=orb.moment_of_inertia, mass=orb.mass, damping=0.99)
+                    self.physics_engine.set_velocity(orb, (orb.change_x, orb.change_y))
+                enemy.kill()
 
         # reposition rocks if they drift outside of the y axis
         for rock in self.scene['rocks']:

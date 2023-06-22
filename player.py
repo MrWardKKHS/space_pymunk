@@ -15,6 +15,9 @@ class Player(arcade.Sprite):
         self.physics_body: Body = None
         self.center_x = x
         self.center_y = y
+        self.experience = 0
+        self.next_level_at = 100
+        self.level = 1
 
         try:# This is a holder for implementing multiple players in the future
             self.joystick = arcade.get_joysticks()[player_num]
@@ -47,3 +50,9 @@ class Player(arcade.Sprite):
         """Makes a bullet and returns it to be added to a spritelist elsewhere"""
         bullet = self.weapon_type(center_x=self.center_x, center_y=self.center_y, angle=self.angle + 90)
         return [bullet]
+
+    def gain_exp(self, exp):
+        self.experience += exp
+        if self.experience >= self.next_level_at:
+            self.level += 1
+            self.experience = self.experience - self.next_level_at

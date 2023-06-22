@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 import arcade
 from typing import List, Tuple
 from transitions import Transition
-from activities import BaseActivity, PointInDirectionOfTravelActivity, Seek, Flee, PointTowardsTargetActivity, FireActivity, HealActivity
+from activities import AvoidObstaclesActivity, BaseActivity, PointInDirectionOfTravelActivity, Seek, Flee, PointTowardsTargetActivity, FireActivity, HealActivity
 from decisions import LowHealthDecision, OutOfRange, TakenDamageDecision, TimeElapsedDecision, WithinRangeDecision, FullHealthDecision
 
 # based on tutorial found here
@@ -61,6 +61,7 @@ class SeekAndFleeState(State):
     def enter(self, state_machine: FighterStateMachine):
         self.activities.append(Seek(state_machine.target))
         self.activities.append(PointInDirectionOfTravelActivity())
+        self.activities.append(AvoidObstaclesActivity(state_machine.rocks))
 
         for flee_target in state_machine.flee_targets:
             self.activities.append(Flee(flee_target))
@@ -93,6 +94,7 @@ class NavigateToPointState(State):
             Seek(target=self.target)
         )
         self.activities.append(PointInDirectionOfTravelActivity())
+        self.activities.append(AvoidObstaclesActivity(state_machine.rocks))
 
         self.transitions.append(
             Transition(
@@ -123,6 +125,7 @@ class FleeFromPlayer(State):
             Seek(target=self.target)
         )
         self.activities.append(PointInDirectionOfTravelActivity())
+        self.activities.append(AvoidObstaclesActivity(state_machine.rocks))
 
         self.transitions.append(
             Transition(
@@ -223,5 +226,3 @@ class Heal(State):
 
     def __str__(self) -> str:
         return "healing"
-
-

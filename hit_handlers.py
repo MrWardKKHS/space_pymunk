@@ -1,6 +1,10 @@
 import arcade
+from player import Player
 from fighter import Fighter
-from bullets import Bullet
+from bullets import Bullet, Orb
+
+"""Note: All collision handlers should return True or False to signify if 
+Further processing is required"""
 
 def enemy_hit_handler(enemy: Fighter, bullet: Bullet, arbiter, space, data):
     """When the enemy is hit by a bullet, take off that bullet's damage
@@ -9,11 +13,16 @@ def enemy_hit_handler(enemy: Fighter, bullet: Bullet, arbiter, space, data):
     """
     enemy.health -= 1
     bullet.kill()
-    if enemy.health <= 0:
-        enemy.kill()
 
 def kill_bullet(rock: arcade.Sprite, bullet: Bullet, arbiter, space, data):
     bullet.kill()
 
 def no_collision(a, b, arbiter, space, data):
     pass
+
+def pick_up_exp(player: Player, orb: Orb, arbiter, space, data):
+    player.gain_exp(orb.exp)
+    orb.kill()
+
+    # Stop processing physics on this collision
+    return False

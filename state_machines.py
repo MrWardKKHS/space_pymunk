@@ -27,12 +27,13 @@ class StateMachine:
         pass
 
 class FighterStateMachine(StateMachine):
-    def __init__(self, sprite: Fighter, physics_engine: arcade.PymunkPhysicsEngine, bullet_list: arcade.SpriteList, player_sprite: Player):
+    def __init__(self, sprite: Fighter, physics_engine: arcade.PymunkPhysicsEngine, bullet_list: arcade.SpriteList, player_sprite: Player, rocks: arcade.SpriteList):
         super().__init__(sprite)
         self.target = player_sprite
         self.flee_targets = []
         self.bullet_list = bullet_list
         self.physics_engine = physics_engine
+        self.rocks = rocks
 
     def awake(self):
         self.state = SeekAndFleeState()

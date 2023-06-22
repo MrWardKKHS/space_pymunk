@@ -1,8 +1,9 @@
 import arcade
+import random
 from pyglet.math import Vec2
 from typing import List
 import math
-from bullets import RedLaser, Saw
+from bullets import RedLaser, Saw, Orb
 from pymunk import Body
 from utils import get_physics_body
 from state_machines import FighterStateMachine, StateMachine
@@ -19,10 +20,27 @@ class Sprite(arcade.Sprite):
         self.health = health
         self.max_health = health
         self.weapon_type = Saw
+        self.level = 1
 
     @property
     def physics_body(self) -> Body:
         return get_physics_body(self.physics_engines[0], self)
+
+    @property
+    def experience(self):
+        return self.level
+
+    def drop_experience(self):
+        drops = random.randint(5, 15)
+        exp = self.experience / drops
+        orbs = []
+        for i in range(drops):
+            angle = 360 * random.random()
+            orb = Orb(self.center_x, self.center_y, angle, exp)
+            orbs.append(orb)
+        return orbs
+
+            
 
 
 class Fighter(Sprite):
@@ -31,7 +49,7 @@ class Fighter(Sprite):
     This class contains several default steering behaviours
     and logic to handle firing 
     """
-    def __init__(self, x: int, y: int, health: int = 20 ):
+    def __init__(self, x: int, y: int, health: int = 2 ):
         super().__init__(':resources:images/space_shooter/playerShip1_orange.png', scale=1, x=x, y=y, health=health)
         # physics engine not available during init
         self.state_machine = StateMachine(self)
@@ -55,6 +73,10 @@ class Fighter(Sprite):
         if abs(angle - angle_to_target) < math.pi/16:
             return True
         return False
+
+    @property
+    def angle_radians(self):
+        return math.radians(self.angle)
 
     def pymunk_moved(self, physics_engine: arcade.PymunkPhysicsEngine, dx, dy, d_angle) -> None:
         self.physics_body.angular_velocity *= 0.7

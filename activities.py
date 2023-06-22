@@ -136,3 +136,59 @@ class FireActivity(BaseActivity):
 class HealActivity(BaseActivity):
     def execute(self, state_machine: StateMachine):
         state_machine.sprite.health += 1
+
+class AvoidObstaclesActivity(BaseActivity):
+    def __init__(self, rocks: arcade.SpriteList) -> None:
+        super().__init__()
+        self.front_detector = arcade.SpriteCircle(20, (0, 0, 255))
+        self.left_detector = arcade.SpriteCircle(20, (255, 0, 0))
+        self.right_detector = arcade.SpriteCircle(20, (0, 255, 0))
+        self.rocks = rocks
+
+    def execute(self, state_machine: StateMachine):
+        # Move detectors relative to the sprite 
+        vel = Vec2(state_machine.sprite.physics_body.velocity[0], state_machine.sprite.physics_body.velocity[1]).mag
+        speed_scale = (vel / state_machine.sprite.max_speed)
+        d = 120 * speed_scale + 20
+        x = state_machine.sprite.center_x + d  * math.cos(state_machine.sprite.angle_radians + math.pi/2) 
+        y = state_machine.sprite.center_y + d  * math.sin(state_machine.sprite.angle_radians + math.pi/2) 
+        self.front_detector.position = (x, y)
+
+        x = state_machine.sprite.center_x +  d * math.cos(state_machine.sprite.angle_radians)
+        y = state_machine.sprite.center_y +  d * math.sin(state_machine.sprite.angle_radians) 
+        self.left_detector.position = (x, y)
+
+        x = state_machine.sprite.center_x + d * math.cos(state_machine.sprite.angle_radians + math.pi) 
+        y = state_machine.sprite.center_y + d * math.sin(state_machine.sprite.angle_radians + math.pi) 
+        self.right_detector.position = (x, y)
+
+        left_high = arcade.check_for_collision_with_list(self.left_detector, self.rocks) 
+        right_high = arcade.check_for_collision_with_list(self.left_detector, self.rocks) 
+        front_high = arcade.check_for_collision_with_list(self.front_detector, self.rocks) 
+        
+        rocks = []
+        rocks.extend(left_high)
+        rocks.extend(right_high)
+        rocks.extend(front_high)
+
+        for rock in rocks:
+            pos = Vec2(state_machine.sprite.center_x, state_machine.sprite.center_y)
+            force = Vec2(rock.center_x, rock.center_y) - pos
+            force = -force
+
+            # get current velocity
+            vel = Vec2(state_machine.sprite.physics_body.velocity.x, state_machine.sprite.physics_body.velocity.y)
+            desired_speed = 400 
+
+            # scale it to the maximum speed
+            force = force.from_magnitude(desired_speed)
+
+            # take the difference between desired velocity and current velocity 
+            # to get a change in velocity 
+            force -= vel
+
+            force.limit(state_machine.sprite.max_force)
+
+            # add the force to forces to add later
+            state_machine.sprite.forces.append(force)
+
