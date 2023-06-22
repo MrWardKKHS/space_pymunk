@@ -20,14 +20,15 @@
 
 
 # Backlog
-- Enemies wander off screen
+- Enemies wander off screen - make waypoints appear in random y coord
 - There needs to be a representation of level \ experience
 - Could there be damage text sprites, like borderlands?
-- Remove collisions between enemy bullet and player bullet layers
-
+- enemies that fall off back of the screen need to seek player
 
 # Doing
 
 
 # Done
+- Remove collisions between enemy bullet and player bullet layers
+- damage calculation not being applied
 

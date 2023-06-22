@@ -68,6 +68,7 @@ class Player(arcade.Sprite):
         self.defence += random.randint(0, 3)
         self.health += random.randint(0, 5)
         self.stat_points = random.randint(3, 7)
+        print(self.level, self.attack)
         if self.experience >= self.next_level_at:
             self.level_up()
 

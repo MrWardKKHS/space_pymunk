@@ -1,5 +1,6 @@
 import arcade
 import math
+import random
 
 class Bullet(arcade.Sprite):
     def __init__(self, filename, center_x, center_y, angle, damage=1, level=1, scale=1):
@@ -88,4 +89,5 @@ class Orb(Bullet):
         self.change_y = self.max_velocity * math.sin(self.angle_radians + math.pi / 2)
         self.max_velocity = 200
         self.collision_type = 'orb'
+        self.lifespan = 400 + random.randint(-50, 50) # stop all apearing and disapearing as one
         

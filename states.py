@@ -2,6 +2,9 @@ from __future__ import annotations
 from os import stat
 from typing import TYPE_CHECKING
 import math
+import random
+
+from constants import HEIGHT
 
 if TYPE_CHECKING:
     from state_machines import FighterStateMachine, StateMachine 
@@ -69,7 +72,7 @@ class SeekAndFleeState(State):
         self.transitions.append(
             Transition(
                 LowHealthDecision(10), 
-                FleeFromPlayer((state_machine.sprite.center_x + 3000, state_machine.sprite.center_y)), 
+                FleeFromPlayer((state_machine.sprite.center_x + 1500, random.randint(0, HEIGHT))), 
                 None
             )
         )
@@ -98,7 +101,7 @@ class NavigateToPointState(State):
 
         self.transitions.append(
             Transition(
-                WithinRangeDecision(self.target, 400),
+                WithinRangeDecision(self.target, 300),
                 SeekAndFleeState(),
                 None 
             )
@@ -169,7 +172,7 @@ class PointAndShoot(State):
         self.transitions.append(
             Transition(
                 TakenDamageDecision(state_machine.sprite.health), 
-                NavigateToPointState((state_machine.sprite.center_x + 1000, state_machine.sprite.center_y)), 
+                NavigateToPointState((state_machine.sprite.center_x + 750, random.randint(0, HEIGHT))), 
                 None
             )
         )
@@ -205,7 +208,7 @@ class Heal(State):
         self.transitions.append(
             Transition(
                 TakenDamageDecision(state_machine.sprite.health), 
-                NavigateToPointState((state_machine.sprite.center_x + 1000, state_machine.sprite.center_y)), 
+                NavigateToPointState((state_machine.sprite.center_x + 750, random.randint(0, HEIGHT))), 
                 None
             )
         )

@@ -135,7 +135,7 @@ class FireActivity(BaseActivity):
 
 class HealActivity(BaseActivity):
     def execute(self, state_machine: StateMachine):
-        state_machine.sprite.health += 1
+        state_machine.sprite.health += max(state_machine.sprite.max_health // 12, 1)
 
 class AvoidObstaclesActivity(BaseActivity):
     def __init__(self, rocks: arcade.SpriteList) -> None:
@@ -154,12 +154,12 @@ class AvoidObstaclesActivity(BaseActivity):
         y = state_machine.sprite.center_y + d  * math.sin(state_machine.sprite.angle_radians + math.pi/2) 
         self.front_detector.position = (x, y)
 
-        x = state_machine.sprite.center_x +  d * math.cos(state_machine.sprite.angle_radians)
-        y = state_machine.sprite.center_y +  d * math.sin(state_machine.sprite.angle_radians) 
+        x = state_machine.sprite.center_x +  d * math.cos(state_machine.sprite.angle_radians + math.pi)
+        y = state_machine.sprite.center_y +  d * math.sin(state_machine.sprite.angle_radians + math.pi) 
         self.left_detector.position = (x, y)
 
-        x = state_machine.sprite.center_x + d * math.cos(state_machine.sprite.angle_radians + math.pi) 
-        y = state_machine.sprite.center_y + d * math.sin(state_machine.sprite.angle_radians + math.pi) 
+        x = state_machine.sprite.center_x + d * math.cos(state_machine.sprite.angle_radians) 
+        y = state_machine.sprite.center_y + d * math.sin(state_machine.sprite.angle_radians) 
         self.right_detector.position = (x, y)
 
         left_high = arcade.check_for_collision_with_list(self.left_detector, self.rocks) 

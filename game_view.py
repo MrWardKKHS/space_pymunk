@@ -7,7 +7,7 @@ from pyglet.math import Vec2
 from constants import *
 from fighter import Fighter
 from player import Player
-from hit_handlers import enemy_hit_handler, kill_bullet, pick_up_exp
+from hit_handlers import enemy_hit_handler, kill_bullet, no_collision, pick_up_exp
 from state_machines import FighterStateMachine
 
 class TestGame(arcade.Window):
@@ -111,7 +111,12 @@ class TestGame(arcade.Window):
         self.physics_engine.add_collision_handler(
                 'enemy',
                 'bullet',
-                begin_handler=lambda a, b, ab, s, d: False
+                begin_handler=no_collision
+        )
+        self.physics_engine.add_collision_handler(
+                'player_bullet',
+                'bullet',
+                begin_handler=no_collision
         )
 
         # TODO Turn off collisions between enemies and enemy_bullets

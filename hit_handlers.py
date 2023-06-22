@@ -11,14 +11,15 @@ def enemy_hit_handler(enemy: Fighter, bullet: Bullet, arbiter, space, data):
 
     Kill the enemy if its health falls below 0
     """
-    enemy.health -= 1
+    enemy.take_damage(bullet.damage, bullet.level)
     bullet.kill()
 
 def kill_bullet(rock: arcade.Sprite, bullet: Bullet, arbiter, space, data):
     bullet.kill()
 
 def no_collision(a, b, arbiter, space, data):
-    pass
+    """use as a begin handler to turn off interactions between layers"""
+    return False
 
 def pick_up_exp(player: Player, orb: Orb, arbiter, space, data):
     player.gain_exp(orb.exp)
