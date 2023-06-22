@@ -129,6 +129,7 @@ class TestGame(arcade.Window):
                 int(self.player_sprite.center_x + 4 * WIDTH)
             ), 
             random.randint(0, HEIGHT),
+            level=random.randint(3, 10)
         )
         # Add the sprite to the physics engine including specifying the collision type
         self.physics_engine.add_sprite(

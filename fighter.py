@@ -9,18 +9,20 @@ from utils import get_physics_body
 from state_machines import FighterStateMachine, StateMachine
 
 class Sprite(arcade.Sprite):
-    def __init__(self, filename: str = "", scale: float = 1, x: int = 0, y: int = 0, health: int = 20):
+    def __init__(self, filename: str = "", scale: float = 1, x: int = 0, y: int = 0, level: int = 1):
         super().__init__(filename, scale)
         self.center_x = x
         self.center_y = y
+        self.level = level
         self.max_speed = 500
         self.max_force = 50
         self.forces: List[Vec2] = []
-        self.weapon_cooldown = 0
-        self.health = health
-        self.max_health = health
+        self.health = math.floor((random.randint(40, 65) * 2 * level) / 30) + level + 10
+        self.max_health = self.health
+        self.attack = math.floor((random.randint(20, 35) * 2 * level) / 30) + 5
+        self.defence = math.floor((random.randint(20, 35) * 2 * level) / 30) + 5
+        self.base_experience = 10
         self.weapon_type = Saw
-        self.level = 1
 
     @property
     def physics_body(self) -> Body:
@@ -28,7 +30,11 @@ class Sprite(arcade.Sprite):
 
     @property
     def experience(self):
-        return self.level
+        return (self.base_experience * self.level) // 7
+
+    @property
+    def angle_radians(self):
+        return math.radians(self.angle)
 
     def drop_experience(self):
         drops = random.randint(5, 15)
@@ -40,6 +46,9 @@ class Sprite(arcade.Sprite):
             orbs.append(orb)
         return orbs
 
+    def take_damage(self, damage, player_level):
+        res = (((2 * player_level+2)*(damage/self.defence))/100) * random.randint(75, 100)
+        self.health -= res
             
 
 
@@ -49,8 +58,14 @@ class Fighter(Sprite):
     This class contains several default steering behaviours
     and logic to handle firing 
     """
-    def __init__(self, x: int, y: int, health: int = 2 ):
-        super().__init__(':resources:images/space_shooter/playerShip1_orange.png', scale=1, x=x, y=y, health=health)
+    def __init__(self, x: int, y: int, level: int):
+        super().__init__(
+            ':resources:images/space_shooter/playerShip1_orange.png',
+             scale=1,
+             x=x,
+             y=y,
+             level=level
+        )
         # physics engine not available during init
         self.state_machine = StateMachine(self)
 
@@ -58,7 +73,7 @@ class Fighter(Sprite):
         bullets = []
         x = self.center_x + 80 * math.cos(math.radians(self.angle + 90))
         y = self.center_y + 80 * math.sin(math.radians(self.angle + 90))
-        bullet = self.weapon_type(x, y, self.angle)
+        bullet = self.weapon_type(x, y, self.angle, self.attack, self.level)
         bullets.append(bullet)
         return bullets
 
@@ -74,9 +89,6 @@ class Fighter(Sprite):
             return True
         return False
 
-    @property
-    def angle_radians(self):
-        return math.radians(self.angle)
 
     def pymunk_moved(self, physics_engine: arcade.PymunkPhysicsEngine, dx, dy, d_angle) -> None:
         self.physics_body.angular_velocity *= 0.7

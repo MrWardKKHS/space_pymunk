@@ -2,11 +2,12 @@ import arcade
 import math
 
 class Bullet(arcade.Sprite):
-    def __init__(self, filename, center_x, center_y, angle, damage=1, scale=1):
+    def __init__(self, filename, center_x, center_y, angle, damage=1, level=1, scale=1):
         super().__init__(filename, scale=scale, center_x=center_x, center_y=center_y)
         self.angle = angle
         self.lifespan = 200
         self.damage = damage
+        self.level = level
         self.max_velocity = 1500
         self.movement_behaviour = None
         self.moment_of_inertia = 50
@@ -30,7 +31,7 @@ class Bullet(arcade.Sprite):
 
 class RedLaser(Bullet):
     """Standard enemy laser. Fast but weak"""
-    def __init__(self, center_x, center_y, angle):
+    def __init__(self, center_x, center_y, angle, damage):
         super().__init__(':resources:images/space_shooter/laserRed01.png', center_x, center_y, angle, scale=0.5)
         self.change_x = self.max_velocity * math.cos(self.angle_radians + math.pi / 2)
         self.change_y = self.max_velocity * math.sin(self.angle_radians + math.pi / 2)
@@ -38,15 +39,31 @@ class RedLaser(Bullet):
 
 class BlueLaser(Bullet):
     """Standard laser for the player. The initial weapon"""
-    def __init__(self, center_x, center_y, angle):
-        super().__init__(':resources:images/space_shooter/laserBlue01.png', center_x, center_y, angle, scale=0.5)
+    def __init__(self, center_x, center_y, angle, damage, level):
+        super().__init__(
+            ':resources:images/space_shooter/laserBlue01.png',
+            center_x,
+            center_y,
+            angle,
+            damage=damage,
+            level=level,  
+            scale=0.5
+        )
         self.collision_type = 'player_bullet'
         self.mass = 0.5
 
 class Saw(Bullet):
     """A slow moving heavy bullet, great for knocing asteroids"""
-    def __init__(self, center_x, center_y, angle):
-        super().__init__(':resources:images/enemies/saw.png', center_x, center_y, angle, scale=0.3)
+    def __init__(self, center_x, center_y, angle, damage, level):
+        super().__init__(
+            ':resources:images/enemies/saw.png',
+             center_x,
+             center_y,
+             angle,
+             damage=damage, 
+             level=level, 
+             scale=0.3
+        )
         self.max_velocity = 500
         self.mass = 5
         self.change_x = self.max_velocity * math.cos(self.angle_radians + math.pi / 2)
@@ -64,7 +81,7 @@ class Bouncy(Bullet):
         # This should be fired at an angle to accentuate this behavior
 
 class Orb(Bullet):
-    def __init__(self, center_x, center_y, angle, exp):
+    def __init__(self, center_x, center_y, angle, exp: float):
         super().__init__(':resources:images/items/star.png', center_x, center_y, angle, scale=0.2)
         self.exp = exp
         self.change_x = self.max_velocity * math.cos(self.angle_radians + math.pi / 2)

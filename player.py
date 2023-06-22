@@ -1,3 +1,4 @@
+import random
 import arcade
 from pymunk import Body
 from bullets import BlueLaser
@@ -18,6 +19,9 @@ class Player(arcade.Sprite):
         self.experience = 0
         self.next_level_at = 100
         self.level = 1
+        self.attack = random.randint(10, 15)
+        self.defence = random.randint(10, 35)
+        self.health = random.randint(15, 55)
 
         try:# This is a holder for implementing multiple players in the future
             self.joystick = arcade.get_joysticks()[player_num]
@@ -48,11 +52,28 @@ class Player(arcade.Sprite):
 
     def fire(self) -> List[arcade.Sprite]:
         """Makes a bullet and returns it to be added to a spritelist elsewhere"""
-        bullet = self.weapon_type(center_x=self.center_x, center_y=self.center_y, angle=self.angle + 90)
+        bullet = self.weapon_type(center_x=self.center_x, center_y=self.center_y, angle=self.angle + 90, damage=self.attack, level=self.level)
         return [bullet]
 
     def gain_exp(self, exp):
         self.experience += exp
         if self.experience >= self.next_level_at:
-            self.level += 1
-            self.experience = self.experience - self.next_level_at
+            self.level_up()
+
+    def level_up(self):
+        self.level += 1
+        self.experience = self.experience - self.next_level_at
+        self.next_level_at = (self.level + 1) ** 3
+        self.attack += random.randint(0, 3)
+        self.defence += random.randint(0, 3)
+        self.health += random.randint(0, 5)
+        self.stat_points = random.randint(3, 7)
+        if self.experience >= self.next_level_at:
+            self.level_up()
+
+
+    def take_damage(self, damage):
+        """Loosely based on the Pokemon damage calculation"""
+        res = (((2 * self.level+2)*(damage/self.defence))/100) * random.randint(75, 100)
+        self.health -= res
+
