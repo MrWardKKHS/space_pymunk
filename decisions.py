@@ -9,7 +9,7 @@ from time import time
 class Decision:
     """A class to hold a conditional. This represents an 'if' statement 
     that can be swapped out in a transition"""
-    def decide(self, state_machine: StateMachine) -> bool:
+    def decide(self, state_machine: StateMachine) -> bool: # pyright: ignore
         """Evaluate the decision"""
         return False
 

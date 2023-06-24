@@ -12,16 +12,16 @@ if TYPE_CHECKING:
 class BaseActivity:
     """Represents something to be done while in a given state,
     This can be one of many activities"""
-    def execute(self, state_machine: StateMachine):
+    def execute(self, state_machine: StateMachine) -> None: # pyright: ignore
         """Do the activity"""
         pass
 
-    def enter(self, state_machine: StateMachine):
+    def enter(self, state_machine: StateMachine): # pyright: ignore
         """Enter the activity
         Include any logic that is required when the activity is first run"""
         pass
 
-    def exit(self, state_machine: StateMachine):
+    def exit(self, state_machine: StateMachine): # pyright: ignore
         """Add any cleanup code here"""
         pass
 
