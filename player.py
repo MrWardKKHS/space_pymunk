@@ -13,7 +13,7 @@ class Player(arcade.Sprite):
         # the physics body is not accessable when the sprite is first created as 
         # it needs to be registered with the physics engine after this step
         # It is set when the sprite is first moved by the physics engine
-        self.physics_body: Body = None
+        self.physics_body: Body = None # pyright: ignore
         self.center_x = x
         self.center_y = y
         self.experience = 0
@@ -52,7 +52,7 @@ class Player(arcade.Sprite):
 
     def fire(self) -> List[arcade.Sprite]:
         """Makes a bullet and returns it to be added to a spritelist elsewhere"""
-        bullet = self.weapon_type(center_x=self.center_x, center_y=self.center_y, angle=self.angle + 90, damage=self.attack, level=self.level)
+        bullet = self.weapon_type(center_x=self.center_x, center_y=self.center_y, angle=-self.angle + 90, damage=self.attack, level=self.level)
         return [bullet]
 
     def gain_exp(self, exp):

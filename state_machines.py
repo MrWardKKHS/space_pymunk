@@ -2,12 +2,13 @@ from __future__ import annotations
 import arcade
 from typing import TYPE_CHECKING
 from typing import List
-from states import SeekAndFleeState, State
+from states import IdleState, SeekAndFleeState, State
 
 
 if TYPE_CHECKING:
     from bullets import Bullet
     from fighter import Fighter, Sprite
+    from swarm_of_bees import Bee
     from player import Player
 
 
@@ -37,6 +38,17 @@ class FighterStateMachine(StateMachine):
 
     def awake(self):
         self.state = SeekAndFleeState()
+        self.state.enter(self)
+
+class BeeStateMachine(StateMachine):
+    def __init__(self, sprite: Bee, physics_engine: arcade.PymunkPhysicsEngine, player_sprite: Player):
+        super().__init__(sprite)
+        self.target = player_sprite
+        self.physics_engine = physics_engine
+        self.other_bees: List[Bee] = []
+        self.state = IdleState()
+
+    def awake(self):
         self.state.enter(self)
 
 # Some of this should live in the enemy class

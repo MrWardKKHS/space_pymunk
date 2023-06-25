@@ -1,31 +1,30 @@
 from __future__ import annotations
-from os import stat
 from typing import TYPE_CHECKING
-import math
 import random
 
 from constants import HEIGHT
 
 if TYPE_CHECKING:
     from state_machines import FighterStateMachine, StateMachine 
+    from state_machines import BeeStateMachine
 
 import arcade
 from typing import List, Tuple
 from transitions import Transition
 from activities import AvoidObstaclesActivity, BaseActivity, PointInDirectionOfTravelActivity, Seek, Flee, PointTowardsTargetActivity, FireActivity, HealActivity
-from decisions import LowHealthDecision, OutOfRange, TakenDamageDecision, TimeElapsedDecision, WithinRangeDecision, FullHealthDecision
+from decisions import LowHealthDecision, TakenDamageDecision, TimeElapsedDecision, WithinRangeDecision, FullHealthDecision
 
 # based on tutorial found here
 # https://pavcreations.com/finite-state-machine-for-ai-enemy-controller-in-2d/2/#BaseState-class
 
 class BaseState:
-    def execute(self, state_machine: StateMachine):
+    def execute(self, state_machine: StateMachine): # pyright: ignore
         pass
 
-    def enter(self, state_machine: StateMachine):
+    def enter(self, state_machine: StateMachine): # pyright: ignore
         pass
 
-    def exit(self, state_machine: StateMachine):
+    def exit(self, state_machine: StateMachine): # pyright: ignore
         pass
 
 class State(BaseState):
@@ -53,12 +52,12 @@ class State(BaseState):
             transition.exit(state_machine)
 
 
-class IdleState(BaseState):
+
+class IdleState(State):
     def enter(self, state_machine: StateMachine):
+        super().enter(state_machine)
         state_machine.sprite.physics_body.velocity = (0, 0)
 
-    def execute(self, state_machine: StateMachine):
-        pass
 
 class SeekAndFleeState(State):
     def enter(self, state_machine: FighterStateMachine):
@@ -147,14 +146,6 @@ class PointAndShoot(State):
     def enter(self, state_machine: FighterStateMachine):
         self.activities.append(FireActivity())
         self.activities.append(PointTowardsTargetActivity(state_machine.target))
-        
-#        self.transitions.append(
-#            Transition(
-#                WithinRangeDecision(state_machine.target, outer_limit=1000, inner_limit=700), 
-#                None,
-#                SeekAndFleeState(),
-#            )
-#        )
         self.transitions.append(
             Transition(
                 TimeElapsedDecision(1.8),
@@ -191,13 +182,6 @@ class PointAndShoot(State):
 class Heal(State):
     def enter(self, state_machine: FighterStateMachine):
         self.activities.append(HealActivity())
-#        self.transitions.append(
-#            Transition(
-#                WithinRangeDecision(state_machine.target, outer_limit=1000, inner_limit=700), 
-#                None,
-#                SeekAndFleeState(),
-#            )
-#        )
         self.transitions.append(
             Transition(
                 TimeElapsedDecision(1.2),
@@ -229,3 +213,33 @@ class Heal(State):
 
     def __str__(self) -> str:
         return "healing"
+
+class SwarmState(State):
+    def enter(self, state_machine: BeeStateMachine):
+        self.activities.append(Seek(state_machine.target)) # TODO add distance, strength
+        self.activities.append(PointInDirectionOfTravelActivity())
+
+        for flee_target in state_machine.other_bees: # TODO add distance, strength
+            self.activities.append(Flee(flee_target))
+
+        for other_bee in state_machine.other_bees: # TODO add distance, strength
+            self.activities.append(Seek(other_bee))
+
+    def __str__(self) -> str:
+        return "Seeking Player"
+
+class WaitForPull(IdleState):
+    def __init__(self, target):
+        super().__init__()
+        self.target = target
+
+    def enter(self, state_machine):
+        super().enter(state_machine)
+        self.transitions.append(
+            Transition(
+                WithinRangeDecision(self.target, 500), 
+                SwarmState(),
+                None
+            )
+        )
+

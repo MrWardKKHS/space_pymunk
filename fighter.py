@@ -8,8 +8,9 @@ from pymunk import Body
 from utils import get_physics_body
 from state_machines import FighterStateMachine, StateMachine
 
-class Sprite(arcade.Sprite):
-    def __init__(self, filename: str = "", scale: float = 1, x: int = 0, y: int = 0, level: int = 1):
+class Enemy(arcade.Sprite):
+    """Base sprite for enemies"""
+    def __init__(self, filename: str = "", scale: float = 1, x: float = 0, y: float = 0, level: int = 1):
         super().__init__(filename, scale)
         self.center_x = x
         self.center_y = y
@@ -23,6 +24,8 @@ class Sprite(arcade.Sprite):
         self.defence = math.floor((random.randint(20, 35) * 2 * level) / 30) + 5
         self.base_experience = 10
         self.weapon_type = Saw
+        # physics engine not available during init
+        self.state_machine = StateMachine(self)
 
     @property
     def physics_body(self) -> Body:
@@ -36,7 +39,7 @@ class Sprite(arcade.Sprite):
     def angle_radians(self):
         return math.radians(self.angle)
 
-    def drop_experience(self):
+    def drop_experience(self) -> List[Orb]:
         drops = random.randint(5, 15)
         exp = self.experience / drops
         orbs = []
@@ -50,46 +53,6 @@ class Sprite(arcade.Sprite):
         res = (((2 * player_level+2)*(damage/self.defence))/100) * random.randint(75, 100)
         self.health -= res
             
-
-
-class Fighter(Sprite):
-    """
-    An enemy in the game
-    This class contains several default steering behaviours
-    and logic to handle firing 
-    """
-    def __init__(self, x: int, y: int, level: int):
-        super().__init__(
-            ':resources:images/space_shooter/playerShip1_orange.png',
-             scale=1,
-             x=x,
-             y=y,
-             level=level
-        )
-        # physics engine not available during init
-        self.state_machine = StateMachine(self)
-
-    def fire(self) -> List[arcade.Sprite]:
-        bullets = []
-        x = self.center_x + 80 * math.cos(math.radians(self.angle + 90))
-        y = self.center_y + 80 * math.sin(math.radians(self.angle + 90))
-        bullet = self.weapon_type(x, y, self.angle, self.attack, self.level)
-        bullets.append(bullet)
-        return bullets
-
-    def pointing_at_target(self, target):
-        """Calculate if the enemy is pointing at the target so it should fire if it can"""
-        angle = math.radians(self.angle - 90)
-        pos = Vec2(*self.physics_body.position) # The * is a little unpacking trick here
-        target_pos = Vec2(target)
-        vec_to_target = pos - target_pos
-        angle_to_target = vec_to_target.heading
-        # check if difference in angle is within some margin
-        if abs(angle - angle_to_target) < math.pi/16:
-            return True
-        return False
-
-
     def pymunk_moved(self, physics_engine: arcade.PymunkPhysicsEngine, dx, dy, d_angle) -> None:
         self.physics_body.angular_velocity *= 0.7
         net = Vec2()
@@ -101,12 +64,36 @@ class Fighter(Sprite):
         vel = Vec2(self.physics_body.velocity.x, self.physics_body.velocity.y)
         self.forces.clear()
         # self.physics_body.angle = vel.heading - math.pi/2
-        
+
+    def update(self) -> None:
+        self.state_machine.update()
+
+class Fighter(Enemy):
+    """
+    An enemy in the game
+    This class contains several default steering behaviours
+    and logic to handle firing 
+    """
+    def __init__(self, x: int, y: int, level: int) -> None:
+        super().__init__(
+            ':resources:images/space_shooter/playerShip1_orange.png',
+             scale=1,
+             x=x,
+             y=y,
+             level=level
+        )
+
+    def fire(self) -> List[arcade.Sprite]:
+        bullets = []
+        #x = self.center_x + 80 * math.cos(math.radians(self.angle))
+        #y = self.center_y + 80 * math.sin(math.radians(self.angle))
+        bullet = self.weapon_type(self.center_x, self.center_y, -self.angle, self.attack, self.level)
+        bullets.append(bullet)
+        return bullets
+
     def rotate_right(self) -> None:
         self.physics_body.angular_velocity += 3
 
     def rotate_left(self) -> None:
         self.physics_body.angular_velocity -= 3
 
-    def update(self):
-        self.state_machine.update()

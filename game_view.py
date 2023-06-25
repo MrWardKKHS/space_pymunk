@@ -9,10 +9,12 @@ from fighter import Fighter
 from player import Player
 from hit_handlers import enemy_hit_handler, kill_bullet, no_collision, pick_up_exp
 from state_machines import FighterStateMachine
+from swarm_of_bees import Swarm
 
 class TestGame(arcade.Window):
-    def __init__(self):
-        super().__init__(WIDTH, HEIGHT, TITLE)
+    """The main game window"""
+    def __init__(self) -> None:
+        super().__init__(WIDTH, HEIGHT, TITLE) # pyright: ignore
 
         self.player_sprite = Player(1, 'blue', 400, 400)
         self.scene = arcade.Scene()
@@ -37,7 +39,7 @@ class TestGame(arcade.Window):
         arcade.set_background_color(arcade.color.BLACK)
         self.setup()
 
-    def setup(self):
+    def setup(self) -> None:
         self.scene = arcade.Scene()
         # add lists. This would normally be handles by your tilemap
         self.scene.add_sprite_list("player")
@@ -69,6 +71,8 @@ class TestGame(arcade.Window):
                 if enemy is not other:
                     enemy.state_machine.flee_targets.append(other)
             enemy.state_machine.awake()
+
+        self.swarm = Swarm(100, 200, 1, 20, self.physics_engine, self.player_sprite, self.scene)
 
         self.accelerating_up = False
         self.accelerating_down = False
@@ -196,6 +200,7 @@ class TestGame(arcade.Window):
         self.clear()
         self.camera.use()
         self.scene.draw()
+        # Draw health bars
         for enemy in self.scene['enemies']:
             arcade.draw_xywh_rectangle_filled(enemy.center_x-10, enemy.center_y + 60, 80, 8, arcade.color.RED)
             arcade.draw_xywh_rectangle_filled(
@@ -205,7 +210,7 @@ class TestGame(arcade.Window):
                     8, 
                     arcade.color.GREEN
             )
-            arcade.draw_text(enemy.state_machine.state, enemy.center_x - 30, enemy.center_y - 60, font_size=20)
+            # arcade.draw_text(enemy.state_machine.state, enemy.center_x - 30, enemy.center_y - 60, font_size=20)
 
             for activity in enemy.state_machine.state.activities:
                 try:
@@ -232,7 +237,7 @@ class TestGame(arcade.Window):
         if self.torque_right:
             self.player_sprite.rotate_right()
 
-    def update(self, delta_time):
+    def on_update(self, delta_time):
         self.physics_engine.step()
         self.physics_engine.resync_sprites()
         self.handle_player_movement()
