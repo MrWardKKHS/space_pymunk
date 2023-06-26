@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import random
 import arcade
+import math
 from arcade.pymunk_physics_engine import PymunkPhysicsEngine
 from pyglet.math import Vec2
 from constants import *
@@ -26,6 +27,8 @@ class TestGame(arcade.Window):
         self.w_pressed = False
         self.camera = arcade.Camera()
         self.physics_engine = PymunkPhysicsEngine()
+        self.gui_camera = arcade.Camera()
+        self.level_text = arcade.Text("", 50, HEIGHT - 80, font_size=20)
 
         # load in the joystick. This could be in a try except
         # in case a joystick is not avalible
@@ -53,6 +56,7 @@ class TestGame(arcade.Window):
         # The player accepts a joystick number and
         # color planning to add multiple players
         self.player_sprite = Player(0, "blue", 500, 400)
+        self.level_text.text = self.player_sprite.level
         self.scene.add_sprite("player", self.player_sprite)
         self.physics_engine.add_sprite(
                 self.player_sprite,
@@ -72,8 +76,9 @@ class TestGame(arcade.Window):
                     enemy.state_machine.flee_targets.append(other)
             enemy.state_machine.awake()
 
-        Swarm(1000, 200, 1, 20, self.physics_engine, self.player_sprite, self.scene)
-        Swarm(5000, 200, 1, 20, self.physics_engine, self.player_sprite, self.scene)
+        Swarm(3000, 200, 1, 8, self.physics_engine, self.player_sprite, self.scene)
+        Swarm(25000, 200, 1, 25, self.physics_engine, self.player_sprite, self.scene)
+        Swarm(5000, 200, 1, 5, self.physics_engine, self.player_sprite, self.scene)
         Swarm(8000, 200, 1, 5, self.physics_engine, self.player_sprite, self.scene)
         Swarm(12000, 200, 1, 10, self.physics_engine, self.player_sprite, self.scene)
 
@@ -89,58 +94,17 @@ class TestGame(arcade.Window):
 
         # add the collision handler between these two sprite types
         # the post_handler is the callback function to run after the collision is delt with
-        self.physics_engine.add_collision_handler(
-                'enemy', 
-                'player_bullet', 
-                post_handler=enemy_hit_handler
-        )
-        self.physics_engine.add_collision_handler(
-                'bee', 
-                'player_bullet', 
-                post_handler=enemy_hit_handler
-        )
-        self.physics_engine.add_collision_handler(
-                'player', 
-                'bee', 
-                post_handler=bee_hit_handler
-        )
-        self.physics_engine.add_collision_handler(
-                'rock', 
-                'player_bullet', 
-                post_handler=kill_bullet
-        )
-        self.physics_engine.add_collision_handler(
-                'rock', 
-                'bullet', 
-                post_handler=kill_bullet
-        )
-        self.physics_engine.add_collision_handler(
-                'enemy', 
-                'bullet', 
-                post_handler=kill_bullet
-        )
-        self.physics_engine.add_collision_handler(
-                'player', 
-                'orb', 
-                begin_handler=pick_up_exp
-                
-        )
-        self.physics_engine.add_collision_handler(
-                'enemy',
-                'bullet',
-                begin_handler=no_collision
-        )
-        self.physics_engine.add_collision_handler(
-                'player_bullet',
-                'bullet',
-                begin_handler=no_collision
-        )
-
-        # TODO Turn off collisions between enemies and enemy_bullets
-        # Potentially the way to do this is to use collision handlers, 
-        # Unsure where to do this in arcade, to overwrite the default
-        # chipmunk is throwing errors on anything other than 'post handlers'
-        # self.physics_engine.space.add_wildcard_collision_handler()
+        self.physics_engine.add_collision_handler('enemy', 'player_bullet', post_handler=enemy_hit_handler)
+        self.physics_engine.add_collision_handler('bee', 'player_bullet', post_handler=enemy_hit_handler)
+        self.physics_engine.add_collision_handler('player', 'bee', post_handler=bee_hit_handler)
+        self.physics_engine.add_collision_handler('rock', 'player_bullet', post_handler=kill_bullet)
+        self.physics_engine.add_collision_handler('rock', 'bullet', post_handler=kill_bullet)
+        self.physics_engine.add_collision_handler('enemy', 'bullet', post_handler=kill_bullet)
+        self.physics_engine.add_collision_handler('player', 'orb', begin_handler=pick_up_exp)
+        self.physics_engine.add_collision_handler('enemy', 'bullet', begin_handler=no_collision)
+        self.physics_engine.add_collision_handler('player_bullet', 'bullet', begin_handler=no_collision)
+        self.physics_engine.add_collision_handler('enemy', 'orb', begin_handler=no_collision)
+        self.physics_engine.add_collision_handler('orb', 'bee', begin_handler=no_collision)
 
     def spawn_enemy(self):
         """Create an enemy and add it to the enemy list AND the physics engine"""
@@ -232,6 +196,11 @@ class TestGame(arcade.Window):
                     activity.left_detector.draw()
                 except:
                     continue
+        self.gui_camera.use()
+        self.level_text.draw()
+        arcade.draw_xywh_rectangle_outline(100, HEIGHT - 50, 200, 30, (51, 51, 51), 2)
+        exp_bar_width = (self.player_sprite.experience / self.player_sprite.next_level_at) * 200
+        arcade.draw_xywh_rectangle_filled(100, HEIGHT - 50, exp_bar_width, 30, (151, 151, 251))
 
     def handle_player_movement(self):
         # .apply_force_at_world_point() applies a force irrespective of a 
@@ -266,12 +235,14 @@ class TestGame(arcade.Window):
                     self.physics_engine.add_sprite(orb, collision_type=orb.collision_type, max_velocity=orb.max_velocity, moment_of_inertia=orb.moment_of_inertia, mass=orb.mass, damping=0.99)
                     self.physics_engine.set_velocity(orb, (orb.change_x, orb.change_y))
                 enemy.kill()
+                self.spawn_enemy()
 
         # reposition rocks if they drift outside of the y axis
         for rock in self.scene['rocks']:
             self.wrap_y_axis_for_rocks(rock)
 
         self.camera.move_to((self.player_sprite.center_x - WIDTH/4, 0))
+        self.level_text.text = self.player_sprite.level
 
 
     def handle_sprite_fire(self, sprite):
@@ -346,6 +317,18 @@ class TestGame(arcade.Window):
             return -self.joystick.y
         else:
             return self.w_pressed - self.s_pressed
+
+    def on_mouse_press(self, x, y, button, modifiers):
+        self.handle_sprite_fire(self.player_sprite)
+
+    def on_mouse_motion(self, x, y, dx, dy):
+        # point player at mouse
+        px = self.player_sprite.physics_body.position.x - self.camera.position.x
+        py = self.player_sprite.physics_body.position.y - self.camera.position.y
+        delta_x = px - x
+        delta_y = py - y
+        angle = math.atan2(delta_y, delta_x)
+        self.player_sprite.physics_body.angle = angle + math.pi / 2 
 
 
 def main():

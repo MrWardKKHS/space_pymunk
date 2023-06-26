@@ -22,7 +22,7 @@ class Enemy(arcade.Sprite):
         self.max_health = self.health
         self.attack = math.floor((random.randint(20, 35) * 2 * level) / 30) + 5
         self.defence = math.floor((random.randint(20, 35) * 2 * level) / 30) + 5
-        self.base_experience = 10
+        self.base_experience = 20
         self.weapon_type = Saw
         # physics engine not available during init
         self.state_machine = StateMachine(self)
@@ -40,7 +40,7 @@ class Enemy(arcade.Sprite):
         return math.radians(self.angle)
 
     def drop_experience(self) -> List[Orb]:
-        drops = random.randint(5, 15)
+        drops = random.randint(5, 10)
         exp = self.experience / drops
         orbs = []
         for i in range(drops):
@@ -82,6 +82,7 @@ class Fighter(Enemy):
              y=y,
              level=level
         )
+        self.base_experience = 40
 
     def fire(self) -> List[arcade.Sprite]:
         bullets = []

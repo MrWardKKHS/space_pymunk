@@ -56,6 +56,7 @@ class Player(arcade.Sprite):
         return [bullet]
 
     def gain_exp(self, exp):
+        print(self.experience)
         self.experience += exp
         if self.experience >= self.next_level_at:
             self.level_up()

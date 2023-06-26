@@ -128,7 +128,7 @@ class Orb(Bullet):
         self.exp = exp
         self.change_x = self.max_velocity * math.cos(self.angle_radians + math.pi / 2)
         self.change_y = self.max_velocity * math.sin(self.angle_radians + math.pi / 2)
-        self.max_velocity = 200
+        self.max_velocity = 100
         self.collision_type = 'orb'
         self.lifespan = 400 + random.randint(-50, 50) # stop all apearing and disapearing as one
         

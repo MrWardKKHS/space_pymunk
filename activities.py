@@ -189,16 +189,16 @@ class AvoidObstaclesActivity(BaseActivity):
         vel = Vec2(state_machine.sprite.physics_body.velocity[0], state_machine.sprite.physics_body.velocity[1]).mag
         speed_scale = (vel / state_machine.sprite.max_speed)
         d = 120 * speed_scale + 20
-        x = state_machine.sprite.center_x + d  * math.cos(state_machine.sprite.angle_radians + math.pi/2) 
-        y = state_machine.sprite.center_y + d  * math.sin(state_machine.sprite.angle_radians + math.pi/2) 
+        x = state_machine.sprite.center_x + d  * math.cos(state_machine.sprite.angle_radians - math.pi/2) 
+        y = state_machine.sprite.center_y + d  * math.sin(state_machine.sprite.angle_radians - math.pi/2) 
         self.front_detector.position = (x, y)
 
-        x = state_machine.sprite.center_x +  d * math.cos(state_machine.sprite.angle_radians + math.pi)
-        y = state_machine.sprite.center_y +  d * math.sin(state_machine.sprite.angle_radians + math.pi) 
+        x = state_machine.sprite.center_x +  d * math.cos(state_machine.sprite.angle_radians)
+        y = state_machine.sprite.center_y +  d * math.sin(state_machine.sprite.angle_radians) 
         self.left_detector.position = (x, y)
 
-        x = state_machine.sprite.center_x + d * math.cos(state_machine.sprite.angle_radians) 
-        y = state_machine.sprite.center_y + d * math.sin(state_machine.sprite.angle_radians) 
+        x = state_machine.sprite.center_x + d * math.cos(state_machine.sprite.angle_radians + math.pi) 
+        y = state_machine.sprite.center_y + d * math.sin(state_machine.sprite.angle_radians + math.pi) 
         self.right_detector.position = (x, y)
 
         left_high = arcade.check_for_collision_with_list(self.left_detector, self.obstacles) 
