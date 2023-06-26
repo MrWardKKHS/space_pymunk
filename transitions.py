@@ -24,6 +24,6 @@ class Transition:
 
     def enter(self, state_machine: StateMachine):
         pass
-
+    
     def exit(self, state_machine: StateMachine):
         pass

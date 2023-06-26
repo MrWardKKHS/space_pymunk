@@ -13,14 +13,16 @@ class Swarm:
     def __init__(self, x: float, y: float, level: int, size: int, physics_engine: arcade.PymunkPhysicsEngine, player: Player, scene) -> None:
         # make lots of bees
         self.bees = []
+        self.pulled = False
         for _ in range(size):
-            bee = Bee(x + randint(-50, 50), y + randint(-50, 50), level, self)
+            bee = Bee(x + randint(-90, 90), y + randint(-90, 90), level, self)
             self.bees.append(bee)
             bee.state_machine = BeeStateMachine(bee, physics_engine, player)
             physics_engine.add_sprite(
                 bee, 
-                collision_type='enemy', 
-                max_velocity=800, # TODO All of these litterals SHOULD be constants...
+                mass=bee.mass, 
+                collision_type='bee', 
+                max_velocity=bee.max_velocity, # TODO All of these litterals SHOULD be constants...
                 moment_of_inertia=100, 
                 damping=0.9
             )
@@ -50,9 +52,5 @@ class Bee(Enemy):
         )
         self.swarm = swarm
         self.other_bees = []
-
-    def rotate_right(self) -> None:
-        self.physics_body.angular_velocity += 3
-
-    def rotate_left(self) -> None:
-        self.physics_body.angular_velocity -= 3
+        self.mass = 0.1
+        self.max_velocity = 200

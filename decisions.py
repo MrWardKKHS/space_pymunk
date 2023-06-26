@@ -1,6 +1,8 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
+    from swarm_of_bees import Swarm
     from state_machines import StateMachine 
 import arcade
 import math
@@ -93,3 +95,10 @@ class TakenDamageDecision(Decision):
 
     def decide(self, state_machine: StateMachine) -> bool:
         return state_machine.sprite.health < self.initial_health
+
+class SwarmPulledDecision(Decision):
+    def __init__(self, swarm: Swarm) -> None:
+        self.swarm = swarm
+
+    def decide(self, state_machine: StateMachine) -> bool:
+        return self.swarm.pulled 

@@ -2,7 +2,7 @@ from __future__ import annotations
 import arcade
 from typing import TYPE_CHECKING
 from typing import List
-from states import IdleState, SeekAndFleeState, State
+from states import IdleState, SeekAndFleeState, State, WaitForPull
 
 
 if TYPE_CHECKING:
@@ -46,7 +46,7 @@ class BeeStateMachine(StateMachine):
         self.target = player_sprite
         self.physics_engine = physics_engine
         self.other_bees: List[Bee] = []
-        self.state = IdleState()
+        self.state = WaitForPull(player_sprite)
 
     def awake(self):
         self.state.enter(self)

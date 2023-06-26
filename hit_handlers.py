@@ -2,6 +2,7 @@ import arcade
 from player import Player
 from fighter import Fighter
 from bullets import Bullet, Orb
+from swarm_of_bees import Bee
 
 """Note: All collision handlers should return True or False to signify if 
 Further processing is required"""
@@ -27,3 +28,7 @@ def pick_up_exp(player: Player, orb: Orb, arbiter, space, data):
 
     # Stop processing physics on this collision
     return False
+
+def bee_hit_handler(player: Player, bee: Bee, arbiter, space, data):
+    # TODO damage player, explosion
+    bee.kill()

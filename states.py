@@ -12,7 +12,7 @@ import arcade
 from typing import List, Tuple
 from transitions import Transition
 from activities import AvoidObstaclesActivity, BaseActivity, PointInDirectionOfTravelActivity, Seek, Flee, PointTowardsTargetActivity, FireActivity, HealActivity
-from decisions import LowHealthDecision, TakenDamageDecision, TimeElapsedDecision, WithinRangeDecision, FullHealthDecision
+from decisions import LowHealthDecision, TakenDamageDecision, TimeElapsedDecision, WithinRangeDecision, FullHealthDecision, SwarmPulledDecision
 
 # based on tutorial found here
 # https://pavcreations.com/finite-state-machine-for-ai-enemy-controller-in-2d/2/#BaseState-class
@@ -216,6 +216,7 @@ class Heal(State):
 
 class SwarmState(State):
     def enter(self, state_machine: BeeStateMachine):
+        state_machine.sprite.swarm.pulled = True
         self.activities.append(Seek(state_machine.target)) # TODO add distance, strength
         self.activities.append(PointInDirectionOfTravelActivity())
 
@@ -238,6 +239,13 @@ class WaitForPull(IdleState):
         self.transitions.append(
             Transition(
                 WithinRangeDecision(self.target, 500), 
+                SwarmState(),
+                None
+            )
+        )
+        self.transitions.append(
+            Transition(
+                SwarmPulledDecision(state_machine.sprite.swarm), 
                 SwarmState(),
                 None
             )

@@ -7,7 +7,7 @@ from pyglet.math import Vec2
 from constants import *
 from fighter import Fighter
 from player import Player
-from hit_handlers import enemy_hit_handler, kill_bullet, no_collision, pick_up_exp
+from hit_handlers import bee_hit_handler, enemy_hit_handler, kill_bullet, no_collision, pick_up_exp
 from state_machines import FighterStateMachine
 from swarm_of_bees import Swarm
 
@@ -72,7 +72,10 @@ class TestGame(arcade.Window):
                     enemy.state_machine.flee_targets.append(other)
             enemy.state_machine.awake()
 
-        self.swarm = Swarm(100, 200, 1, 20, self.physics_engine, self.player_sprite, self.scene)
+        Swarm(1000, 200, 1, 20, self.physics_engine, self.player_sprite, self.scene)
+        Swarm(5000, 200, 1, 20, self.physics_engine, self.player_sprite, self.scene)
+        Swarm(8000, 200, 1, 5, self.physics_engine, self.player_sprite, self.scene)
+        Swarm(12000, 200, 1, 10, self.physics_engine, self.player_sprite, self.scene)
 
         self.accelerating_up = False
         self.accelerating_down = False
@@ -90,6 +93,16 @@ class TestGame(arcade.Window):
                 'enemy', 
                 'player_bullet', 
                 post_handler=enemy_hit_handler
+        )
+        self.physics_engine.add_collision_handler(
+                'bee', 
+                'player_bullet', 
+                post_handler=enemy_hit_handler
+        )
+        self.physics_engine.add_collision_handler(
+                'player', 
+                'bee', 
+                post_handler=bee_hit_handler
         )
         self.physics_engine.add_collision_handler(
                 'rock', 
