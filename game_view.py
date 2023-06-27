@@ -224,6 +224,10 @@ class TestGame(arcade.Window):
         self.physics_engine.resync_sprites()
         self.handle_player_movement()
         self.scene.update()
+        if any([self.a_pressed, self.s_pressed, self.d_pressed, self.w_pressed]):
+            self.player_sprite.texture = self.player_sprite.move_texture
+        else:
+            self.player_sprite.texture = self.player_sprite.idle_texture
 
         # Fighters to seek the player
         for enemy in self.scene['enemies']:

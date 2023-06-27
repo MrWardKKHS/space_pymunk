@@ -23,7 +23,8 @@ class Player(arcade.Sprite):
         self.defence = random.randint(10, 35)
         self.max_health = random.randint(15, 55)
         self.health = self.max_health
-        self.idle_texture = arcade.('assets/images/player/player-off.png'
+        self.idle_texture = arcade.load_texture('assets/images/player/player-off.png')
+        self.move_texture = arcade.load_texture('assets/images/player/player-on.png')
 
         try:# This is a holder for implementing multiple players in the future
             self.joystick = arcade.get_joysticks()[player_num]
