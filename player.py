@@ -21,7 +21,9 @@ class Player(arcade.Sprite):
         self.level = 1
         self.attack = random.randint(10, 15)
         self.defence = random.randint(10, 35)
-        self.health = random.randint(15, 55)
+        self.max_health = random.randint(15, 55)
+        self.health = self.max_health
+        self.idle_texture = arcade.('assets/images/player/player-off.png'
 
         try:# This is a holder for implementing multiple players in the future
             self.joystick = arcade.get_joysticks()[player_num]
@@ -67,7 +69,8 @@ class Player(arcade.Sprite):
         self.next_level_at = (self.level + 1) ** 3
         self.attack += random.randint(0, 3)
         self.defence += random.randint(0, 3)
-        self.health += random.randint(0, 5)
+        self.max_health += random.randint(0, 5)
+        self.health = max_health
         self.stat_points = random.randint(3, 7)
         print(self.level, self.attack)
         if self.experience >= self.next_level_at:
